@@ -11,6 +11,7 @@
 
     <body>
         <!-- snake game canvas -->
+        <div id="score"> 0 </div>
         <canvas id="snakeboard" width="400" height="400"></canvas>
         
         <style>
@@ -38,6 +39,9 @@
             {x: 160, y: 200}
         ]
 
+        let score = 0;
+        let food_x;
+        let food_y;
         // true if changing direction
         let changing_direction = false;
         // horizontal velocity
@@ -45,14 +49,16 @@
         // vertical velocity
         let dy = 0;
 
+
         // get canvas elt
         const snakeboard = document.getElementById("snakeboard");
         // return 2D drawing context
         const snakeboard_ctx = snakeboard.getContext("2d");
         // start game
         main();
-
+        generateFood();
         document.addEventListener("keydown", changeDirection);
+
 
         function main() {
 
@@ -61,6 +67,7 @@
             changing_direction = false;
             setTimeout( function onTick() {
                 clearCanvas();
+                drawFood();
                 moveSnake();
                 drawSnake();
                 // call main again
@@ -96,9 +103,23 @@
         }
 
         function moveSnake() {
+            // create head
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            // add new head to beginning of snake body
             snake.unshift(head);
-            snake.pop();
+            const has_eaten_food = snake[0].x === food_x && snake[0].y === food_y;
+
+            // food generation
+            if (has_eaten_food) {
+                score += 10;
+                document.getElementById('score').innerHTML = score;
+                // new food!
+                generateFood();
+            } else {
+                // remove last part of snake body
+                snake.pop();
+            }
+            
         }
 
         function changeDirection(event) {
@@ -107,7 +128,11 @@
             const UP = 38;
             const DOWN = 40;
 
-            // modifies snake velocity if button is pressed
+            // preventing reversal
+            if (changing_direction) return;
+            changing_direction = true;
+
+            // modulates snake velocity if button is pressed
             const keyPressed = event.keyCode;
             const goingUp = dy === -10;
             const goingDown = dy === 10;
@@ -150,6 +175,36 @@
             return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall
         }
 
+        function randomFood(min, max) {
+            return Math.round((Math.random() * (max - min) + min )/ 10) * 10;
+        }
+
+        function generateFood() {
+            //print("zucc")
+            food_x = randomFood(0, snakeboard.width - 10);
+            food_y = randomFood(0, snakeboard.height - 10);
+            snake.forEach(function has_snake_eaten_food(part) {
+                const has_eaten = part.x == food_x && part.y == food_y;
+                if (has_eaten) generateFood();
+            });
+        }
+
+        function drawFood() {
+            snakeboard_ctx.fillStyle = 'red';
+            snakeboard_ctx.strokestyle = 'green';
+            snakeboard_ctx.fillRect(food_x, food_y, 10, 10);
+            snakeboard_ctx.strokeRect(food_x, food_y, 10, 10);
+        }
+        /*
+        function gameOver() {
+            // reset all global variables
+            // remove all EventListeners
+            // restart: call main at keypress
+            main();
+            generateFood();
+            document.addEventListener("keydown", changeDirection);
+        }
+        */
     </script>
 
 </html>
